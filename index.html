@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
-<title>My Family </title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Family</title>
 <style>
   html, body {
     margin: 0;
@@ -11,43 +12,52 @@
     font-family: Arial, sans-serif;
     background: #f9f9f9;
     overflow: hidden;
+    display: flex;
+    flex-direction: column;
   }
-  h2 {
-    text-align:  center;
-    margin: 10px 0;
-    border-color: #28a745
-  }
- 
-  .controls button {
-  text-align: center;
-  background-color: #28a745; /* nice green */
-  color: white;
-  border: none;
-  border-radius: 8px; /* curvy corners */
-  padding: 8px 16px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-  position: fixed;
-  left: 300px;
-  top: 150px;
-}
 
-.controls button:hover {
-  background-color: #218838; /* slightly darker green on hover */
-}
+  h2 {
+    text-align: center;
+    margin: 10px 0;
+    color: #333;
+  }
+
+  .controls {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+
+  .controls button {
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .controls button:hover {
+    background-color: #218838;
+  }
+
   .tree-container {
-    width: 100%;
-    height: calc(100vh - 90px);
-    overflow: hidden;
+    flex: 1;
+    overflow: auto;
     border-top: 1px solid #ccc;
     background: white;
+    touch-action: pinch-zoom;
   }
+
   svg {
     font: 12px sans-serif;
     user-select: none;
     cursor: grab;
+    width: 100%;
+    height: 100%;
   }
+
   .node circle {
     fill: #4a90e2;
     stroke: #357ABD;
@@ -55,35 +65,50 @@
     cursor: pointer;
     transition: fill 0.3s;
   }
+
   .node circle.collapsed {
     fill: #fc0313;
   }
+
   .node text {
     font-size: 14px;
     fill: #333;
     cursor: pointer;
     user-select: none;
   }
+
   .link {
     fill: none;
     stroke: #aaa;
     stroke-opacity: 0.6;
     stroke-width: 2px;
   }
+
+  footer {
+    text-align: center;
+    font-size: 13px;
+    padding: 10px;
+    background: #f0f0f0;
+    color: #444;
+  }
 </style>
 </head>
 <body>
   <h2>My Family</h2>
 
-  <div class="tree-container">
-      <div class="controls">
+  <div class="controls">
     <button id="resetView">Reset View</button>
   </div>
+
+  <div class="tree-container">
     <svg></svg>
   </div>
 
+  <footer>© Sadiq Axmed Cali 2025</footer>
+
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
+// D3.js family tree logic
 const container = d3.select(".tree-container");
 const svg = d3.select("svg");
 
@@ -119,7 +144,6 @@ d3.csv("family_tree.csv").then(data => {
   const root = [...nodes.values()].find(n => !childIds.has(n.id));
 
   rootHierarchy = d3.hierarchy(root);
-
   update(rootHierarchy);
 });
 
@@ -137,13 +161,11 @@ function toggle(d) {
 function update(source) {
   const nodeHeight = 70;
   const nodeWidth = 140;
-  const margin = 50;
 
   const treeLayout = d3.tree().nodeSize([nodeHeight, nodeWidth]);
   treeLayout(rootHierarchy);
 
   const nodesArray = rootHierarchy.descendants();
-
   const xVals = nodesArray.map(d => d.x);
   const yVals = nodesArray.map(d => d.y);
   const minX = Math.min(...xVals);
@@ -155,22 +177,15 @@ function update(source) {
   const viewportWidth = containerNode.clientWidth;
   const viewportHeight = containerNode.clientHeight;
 
-  svg
-    .attr("width", viewportWidth)
-    .attr("height", viewportHeight);
-
+  svg.attr("width", viewportWidth).attr("height", viewportHeight);
   svg.selectAll("*").remove();
-
   g = svg.append("g");
 
   g.selectAll(".link")
     .data(rootHierarchy.links())
     .join("path")
     .attr("class", "link")
-    .attr("d", d3.linkVertical()
-      .x(d => d.x)
-      .y(d => d.y)
-    );
+    .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
 
   const nodes = g.selectAll(".node")
     .data(nodesArray)
@@ -196,7 +211,6 @@ function fitToScreen() {
   const margin = 50;
   const svgWidth = +svg.attr("width");
   const svgHeight = +svg.attr("height");
-
   const gBBox = g.node().getBBox();
 
   const scale = Math.min(
