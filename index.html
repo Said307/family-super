@@ -16,7 +16,7 @@
     flex-direction: column;
   }
 
-  h1 {
+  h2 {
     text-align: center;
     margin: 10px 0;
     color: #333;
@@ -94,7 +94,7 @@
 </style>
 </head>
 <body>
-  <h1>My Family</h1>
+  <h2>My Family</h2>
 
   <div class="controls">
     <button id="resetView">Reset View</button>
@@ -108,7 +108,6 @@
 
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script>
-// D3.js family tree logic
 const container = d3.select(".tree-container");
 const svg = d3.select("svg");
 
@@ -144,6 +143,22 @@ d3.csv("family_tree.csv").then(data => {
   const root = [...nodes.values()].find(n => !childIds.has(n.id));
 
   rootHierarchy = d3.hierarchy(root);
+
+  // Collapse children deeper than level 2 (i.e., 3rd generation)
+  function collapseBeyondLevel(node, maxDepth) {
+    if (node.depth >= maxDepth && node.children) {
+      node._children = node.children;
+      node.children = null;
+    }
+    if (node.children) {
+      node.children.forEach(child => collapseBeyondLevel(child, maxDepth));
+    }
+    if (node._children) {
+      node._children.forEach(child => collapseBeyondLevel(child, maxDepth));
+    }
+  }
+  collapseBeyondLevel(rootHierarchy, 3); // collapse all after generation 3
+
   update(rootHierarchy);
 });
 
@@ -196,7 +211,7 @@ function update(source) {
 
   nodes.append("circle")
     .attr("r", 10)
-    .attr("class", d => d.children ? "" : d._children ? "collapsed" : "");
+    .attr("class", d => d._children ? "collapsed" : "");
 
   nodes.append("text")
     .attr("dy", "0.35em")
