@@ -35,6 +35,7 @@
     padding: 8px 16px;
     font-size: 14px;
     cursor: pointer;
+    margin: 0 5px;
     transition: background-color 0.3s ease;
   }
 
@@ -98,151 +99,11 @@
 
   <div class="controls">
     <button id="resetView">Reset</button>
+    <button id="expandAll">Expand All</button>
   </div>
 
   <div class="tree-container">
     <svg></svg>
   </div>
 
-  <footer>© Sadiq Axmed Cali 2025</footer>
-
-<script src="https://d3js.org/d3.v7.min.js"></script>
-<script>
-const container = d3.select(".tree-container");
-const svg = d3.select("svg");
-
-const zoom = d3.zoom()
-  .scaleExtent([0.1, 3])
-  .on("zoom", (event) => {
-    g.attr("transform", event.transform);
-  });
-svg.call(zoom);
-
-let g;
-let rootHierarchy;
-
-d3.csv("family_tree.csv").then(data => {
-  const dataPairs = data.map(row => [
-    { id: row.parent_id, name: row.parent_name },
-    { id: row.child_id, name: row.child_name }
-  ]);
-
-  const nodes = new Map();
-
-  for (const [parent, child] of dataPairs) {
-    if (!nodes.has(parent.id)) {
-      nodes.set(parent.id, { id: parent.id, name: parent.name, children: [] });
-    }
-    if (!nodes.has(child.id)) {
-      nodes.set(child.id, { id: child.id, name: child.name, children: [] });
-    }
-    nodes.get(parent.id).children.push(nodes.get(child.id));
-  }
-
-  const childIds = new Set(dataPairs.map(([_, c]) => c.id));
-  const root = [...nodes.values()].find(n => !childIds.has(n.id));
-
-  rootHierarchy = d3.hierarchy(root);
-
-  // Collapse children deeper than level 2 (i.e., 3rd generation)
-  function collapseBeyondLevel(node, maxDepth) {
-    if (node.depth >= maxDepth && node.children) {
-      node._children = node.children;
-      node.children = null;
-    }
-    if (node.children) {
-      node.children.forEach(child => collapseBeyondLevel(child, maxDepth));
-    }
-    if (node._children) {
-      node._children.forEach(child => collapseBeyondLevel(child, maxDepth));
-    }
-  }
-  collapseBeyondLevel(rootHierarchy, 3); // collapse all after generation 3
-
-  update(rootHierarchy);
-});
-
-function toggle(d) {
-  if (d.children) {
-    d._children = d.children;
-    d.children = null;
-  } else if (d._children) {
-    d.children = d._children;
-    d._children = null;
-  }
-  update(d);
-}
-
-function update(source) {
-  const nodeHeight = 70;
-  const nodeWidth = 140;
-
-  const treeLayout = d3.tree().nodeSize([nodeHeight, nodeWidth]);
-  treeLayout(rootHierarchy);
-
-  const nodesArray = rootHierarchy.descendants();
-  const xVals = nodesArray.map(d => d.x);
-  const yVals = nodesArray.map(d => d.y);
-  const minX = Math.min(...xVals);
-  const maxX = Math.max(...xVals);
-  const minY = Math.min(...yVals);
-  const maxY = Math.max(...yVals);
-
-  const containerNode = container.node();
-  const viewportWidth = containerNode.clientWidth;
-  const viewportHeight = containerNode.clientHeight;
-
-  svg.attr("width", viewportWidth).attr("height", viewportHeight);
-  svg.selectAll("*").remove();
-  g = svg.append("g");
-
-  g.selectAll(".link")
-    .data(rootHierarchy.links())
-    .join("path")
-    .attr("class", "link")
-    .attr("d", d3.linkVertical().x(d => d.x).y(d => d.y));
-
-  const nodes = g.selectAll(".node")
-    .data(nodesArray)
-    .join("g")
-    .attr("class", "node")
-    .attr("transform", d => `translate(${d.x},${d.y})`)
-    .on("click", (event, d) => toggle(d));
-
-  nodes.append("circle")
-    .attr("r", 10)
-    .attr("class", d => d._children ? "collapsed" : "");
-
-  nodes.append("text")
-    .attr("dy", "0.35em")
-    .attr("y", 30)
-    .attr("text-anchor", "middle")
-    .text(d => d.data.name);
-
-  fitToScreen();
-}
-
-function fitToScreen() {
-  const margin = 50;
-  const svgWidth = +svg.attr("width");
-  const svgHeight = +svg.attr("height");
-  const gBBox = g.node().getBBox();
-
-  const scale = Math.min(
-    svgWidth / (gBBox.width + margin * 2),
-    svgHeight / (gBBox.height + margin * 2)
-  );
-
-  const translateX = (svgWidth - gBBox.width * scale) / 2 - gBBox.x * scale;
-  const translateY = (svgHeight - gBBox.height * scale) / 2 - gBBox.y * scale;
-
-  svg.transition().duration(750).call(
-    zoom.transform,
-    d3.zoomIdentity.translate(translateX, translateY).scale(scale)
-  );
-}
-
-d3.select("#resetView").on("click", fitToScreen);
-</script>
-</body>
-</html>
+  <footer>© Sadi
