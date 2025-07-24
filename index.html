@@ -241,7 +241,8 @@ function fitToScreen() {
   const translateX = (svgWidth - gBBox.width * scale) / 2 - gBBox.x * scale;
   const translateY = (svgHeight - gBBox.height * scale) / 2 - gBBox.y * scale;
 
-  svg.transition().duration(750).call(
+  // ❌ Removed transition() to eliminate animation
+  svg.call(
     zoom.transform,
     d3.zoomIdentity.translate(translateX, translateY).scale(scale)
   );
