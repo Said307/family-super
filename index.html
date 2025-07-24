@@ -146,23 +146,25 @@ d3.csv("family_tree.csv").then(data => {
 
   rootHierarchy = d3.hierarchy(root);
 
-  // Collapse children deeper than level 2 (i.e., 3rd generation)
-  function collapseBeyondLevel(node, maxDepth) {
-    if (node.depth >= maxDepth && node.children) {
-      node._children = node.children;
-      node.children = null;
-    }
-    if (node.children) {
-      node.children.forEach(child => collapseBeyondLevel(child, maxDepth));
-    }
-    if (node._children) {
-      node._children.forEach(child => collapseBeyondLevel(child, maxDepth));
-    }
-  }
-  collapseBeyondLevel(rootHierarchy, 3); // collapse all after generation 3
+  // Collapse all after generation 3 (initial load)
+  collapseBeyondLevel(rootHierarchy, 3);
 
   update(rootHierarchy);
 });
+
+// Collapse deeper than a given generation
+function collapseBeyondLevel(node, maxDepth) {
+  if (node.depth >= maxDepth && node.children) {
+    node._children = node.children;
+    node.children = null;
+  }
+  if (node.children) {
+    node.children.forEach(child => collapseBeyondLevel(child, maxDepth));
+  }
+  if (node._children) {
+    node._children.forEach(child => collapseBeyondLevel(child, maxDepth));
+  }
+}
 
 function toggle(d) {
   if (d.children) {
@@ -185,6 +187,7 @@ function update(source) {
   const nodesArray = rootHierarchy.descendants();
   const xVals = nodesArray.map(d => d.x);
   const yVals = nodesArray.map(d => d.y);
+
   const minX = Math.min(...xVals);
   const maxX = Math.max(...xVals);
   const minY = Math.min(...yVals);
@@ -244,7 +247,7 @@ function fitToScreen() {
   );
 }
 
-// ✅ Expand all collapsed (_children) nodes
+// Expand all function
 function expandAll(node) {
   if (node._children) {
     node.children = node._children;
@@ -254,12 +257,18 @@ function expandAll(node) {
     node.children.forEach(expandAll);
   }
 }
+
 d3.select("#expandAll").on("click", () => {
   expandAll(rootHierarchy);
   update(rootHierarchy);
 });
 
-d3.select("#resetView").on("click", fitToScreen);
+// 🔁 Reset button = reset view + collapse to generation 3
+d3.select("#resetView").on("click", () => {
+  collapseBeyondLevel(rootHierarchy, 3);
+  update(rootHierarchy);
+  fitToScreen();
+});
 </script>
 </body>
 </html>
