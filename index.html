@@ -150,6 +150,7 @@ d3.csv("family_tree.csv").then(data => {
   collapseBeyondLevel(rootHierarchy, 3);
 
   update(rootHierarchy);
+  fitToScreen(); // ✅ Only run once after first render
 });
 
 // Collapse deeper than a given generation
@@ -224,7 +225,7 @@ function update(source) {
     .attr("text-anchor", "middle")
     .text(d => d.data.name);
 
-  fitToScreen();
+  // ❌ fitToScreen() removed from here
 }
 
 function fitToScreen() {
@@ -241,7 +242,6 @@ function fitToScreen() {
   const translateX = (svgWidth - gBBox.width * scale) / 2 - gBBox.x * scale;
   const translateY = (svgHeight - gBBox.height * scale) / 2 - gBBox.y * scale;
 
-  // ❌ Removed transition() to eliminate animation
   svg.call(
     zoom.transform,
     d3.zoomIdentity.translate(translateX, translateY).scale(scale)
@@ -268,7 +268,7 @@ d3.select("#expandAll").on("click", () => {
 d3.select("#resetView").on("click", () => {
   collapseBeyondLevel(rootHierarchy, 3);
   update(rootHierarchy);
-  fitToScreen();
+  fitToScreen(); // ✅ Still allowed here
 });
 </script>
 </body>
