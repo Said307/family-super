@@ -150,7 +150,7 @@ d3.csv("family_tree.csv").then(data => {
   collapseBeyondLevel(rootHierarchy, 3);
 
   update(rootHierarchy);
-  fitToScreen(); // ✅ Only run once after first render
+  fitToScreen(); // initial center/zoom
 });
 
 // Collapse deeper than a given generation
@@ -225,7 +225,7 @@ function update(source) {
     .attr("text-anchor", "middle")
     .text(d => d.data.name);
 
-  // ❌ fitToScreen() removed from here
+  centerTree(); // 👈 new function to keep horizontal center without zooming
 }
 
 function fitToScreen() {
@@ -248,6 +248,20 @@ function fitToScreen() {
   );
 }
 
+function centerTree() {
+  const svgWidth = +svg.attr("width");
+  const gBBox = g.node().getBBox();
+  const currentTransform = d3.zoomTransform(svg.node());
+
+  const translateX = (svgWidth - gBBox.width * currentTransform.k) / 2 - gBBox.x * currentTransform.k;
+  const translateY = currentTransform.y; // preserve current vertical position
+
+  svg.call(
+    zoom.transform,
+    d3.zoomIdentity.translate(translateX, translateY).scale(currentTransform.k)
+  );
+}
+
 // Expand all function
 function expandAll(node) {
   if (node._children) {
@@ -264,11 +278,11 @@ d3.select("#expandAll").on("click", () => {
   update(rootHierarchy);
 });
 
-// 🔁 Reset button = reset view + collapse to generation 3
+// Reset button = full fit and collapse
 d3.select("#resetView").on("click", () => {
   collapseBeyondLevel(rootHierarchy, 3);
   update(rootHierarchy);
-  fitToScreen(); // ✅ Still allowed here
+  fitToScreen();
 });
 </script>
 </body>
