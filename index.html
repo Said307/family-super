@@ -150,7 +150,7 @@ d3.csv("family_tree.csv").then(data => {
   collapseBeyondLevel(rootHierarchy, 3);
 
   update(rootHierarchy);
-  fitToScreen(); // initial center/zoom
+  fitToScreen();
 });
 
 // Collapse deeper than a given generation
@@ -167,15 +167,37 @@ function collapseBeyondLevel(node, maxDepth) {
   }
 }
 
+// 🔁 Local zoom in/out and center on clicked node
 function toggle(d) {
-  if (d.children) {
+  const scaleStep = 0.2;
+  const currentTransform = d3.zoomTransform(svg.node());
+  const [x, y] = [d.x, d.y];
+
+  const isCollapsing = !!d.children;
+
+  if (isCollapsing) {
     d._children = d.children;
     d.children = null;
   } else if (d._children) {
     d.children = d._children;
     d._children = null;
   }
+
   update(d);
+
+  const newScale = currentTransform.k + (isCollapsing ? scaleStep : -scaleStep);
+  const clampedScale = Math.max(0.2, Math.min(3, newScale));
+
+  const svgWidth = +svg.attr("width");
+  const svgHeight = +svg.attr("height");
+
+  const translateX = svgWidth / 2 - x * clampedScale;
+  const translateY = svgHeight / 2 - y * clampedScale;
+
+  svg.transition().duration(500).call(
+    zoom.transform,
+    d3.zoomIdentity.translate(translateX, translateY).scale(clampedScale)
+  );
 }
 
 function update(source) {
@@ -224,8 +246,6 @@ function update(source) {
     .attr("y", 30)
     .attr("text-anchor", "middle")
     .text(d => d.data.name);
-
-  centerTree(); // 👈 new function to keep horizontal center without zooming
 }
 
 function fitToScreen() {
@@ -248,21 +268,6 @@ function fitToScreen() {
   );
 }
 
-function centerTree() {
-  const svgWidth = +svg.attr("width");
-  const gBBox = g.node().getBBox();
-  const currentTransform = d3.zoomTransform(svg.node());
-
-  const translateX = (svgWidth - gBBox.width * currentTransform.k) / 2 - gBBox.x * currentTransform.k;
-  const translateY = currentTransform.y; // preserve current vertical position
-
-  svg.call(
-    zoom.transform,
-    d3.zoomIdentity.translate(translateX, translateY).scale(currentTransform.k)
-  );
-}
-
-// Expand all function
 function expandAll(node) {
   if (node._children) {
     node.children = node._children;
@@ -278,7 +283,6 @@ d3.select("#expandAll").on("click", () => {
   update(rootHierarchy);
 });
 
-// Reset button = full fit and collapse
 d3.select("#resetView").on("click", () => {
   collapseBeyondLevel(rootHierarchy, 3);
   update(rootHierarchy);
